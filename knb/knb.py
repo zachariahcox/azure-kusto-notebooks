@@ -1,3 +1,7 @@
+"""
+Collection of useful functions for working with kusto (AzureDataExplorer) 
+  queries from jupyter notebooks.
+"""
 import os
 from ast import literal_eval
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
