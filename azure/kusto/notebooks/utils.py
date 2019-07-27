@@ -22,10 +22,11 @@ def get_client(cluster):
     return c
 
 def execute(client, database, query_name, contents):
+    # NOTE: pending PR: https://github.com/Azure/azure-kusto-python/pull/152
     # recover from serialization if necessary
-    if isinstance(client, str): 
-        client = KustoClient(client)
-        _client_cache[client.kusto_cluster] = client
+    # if isinstance(client, str): 
+    #     client = KustoClient(client)
+    #     _client_cache[client.kusto_cluster] = client
 
     try:
         return client.execute(database, contents)
