@@ -14,6 +14,7 @@ setup(
     description="utilities for working with kusto from notebooks",
     url="https://github.com/zachariahcox/azure-kusto-notebooks",
     install_requires=INSTALL_REQUIRES,
+    namespace_packages=["azure"],
     packages=find_packages(exclude=['azure', 'tests']),
     extras_require={":python_version<'3.0'": ["azure-nspkg"]}
 )
