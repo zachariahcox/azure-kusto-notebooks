@@ -4,6 +4,7 @@ Collection of useful functions for working with kusto (AzureDataExplorer)
 """
 import os
 import calendar as cal
+from datetime import datetime, timedelta, timezone
 from ast import literal_eval
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
