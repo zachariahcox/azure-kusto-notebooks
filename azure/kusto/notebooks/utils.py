@@ -90,5 +90,5 @@ def to_datetime(timestamp):
         except:
             pass
 
-def getTime(timestamp, d):
+def get_time(timestamp, d):
     return int((cal.timegm(to_datetime(timestamp).timetuple()) + (d * 60)) * 1000)
