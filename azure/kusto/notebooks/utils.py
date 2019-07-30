@@ -62,6 +62,9 @@ def execute_file(client, database, path, params, transform = False):
 def to_dataframe(result):
     return dataframe_from_result_table(result)
 
+def to_dataframe_from_future(promise):
+    return to_dataframe(promise.result().primary_results[0])
+
 def print_result_stats(result):
     info_index = result.tables_names.index('QueryCompletionInformation')
     query_stats = result.tables[info_index]
