@@ -3,6 +3,7 @@ Collection of useful functions for working with kusto (AzureDataExplorer)
   queries from jupyter notebooks.
 """
 import os
+import calendar as cal
 from ast import literal_eval
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
@@ -80,3 +81,14 @@ def to_kusto_datetime(dt):
         if dt.startswith(t):
             return dt
     return 'datetime(' + str(dt) + ')'
+
+def to_datetime(timestamp):
+    s = timestamp[:23] + 'Z' # only allow 5 decimals of precision
+    for f in ("%Y-%m-%d %H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%S.%fZ"):
+        try:
+            return datetime.strptime(s, f)
+        except:
+            pass
+
+def getTime(timestamp, d):
+    return int((cal.timegm(to_datetime(timestamp).timetuple()) + (d * 60)) * 1000)
