@@ -40,7 +40,7 @@ def execute(client, database, query_name, contents):
             print('Result size:', len(error.get_partial_results()))
         raise error
 
-def execute_file(client, database, path, params):
+def execute_file(client, database, path, params, transform = False):
     """
     load csl file and replace tokens using the supplied params dictionary"""
     # load query
@@ -51,6 +51,9 @@ def execute_file(client, database, path, params):
 
     # replace parameters
     for k,v in params.items():
+        if transform:
+            if isinstance(v, str):
+                v = '"' + v + '"'        
         contents = contents.replace('{' + k + '}', v)
 
     # return result
