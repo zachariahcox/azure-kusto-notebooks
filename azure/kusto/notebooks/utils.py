@@ -1,5 +1,5 @@
 """
-Collection of useful functions for working with kusto (AzureDataExplorer) 
+Collection of useful functions for working with kusto (AzureDataExplorer)
   queries from jupyter notebooks.
 """
 import os
@@ -11,7 +11,7 @@ from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 
 _client_cache = {}
-def get_client(cluster):
+def get_client(cluster, database):
     """
     get cached, authenticated client for given cluster
     """
@@ -19,14 +19,14 @@ def get_client(cluster):
     c = _client_cache.get(cluster)
     if c is None:
         c = KustoClient(KustoConnectionStringBuilder.with_aad_device_authentication(cluster))
-        c.execute('VSO', 'print "a" | take 0')
+        c.execute(database, 'print "a" | take 0')
         _client_cache[cluster] = c
     return c
 
 def execute(client, database, query_name, contents):
     # NOTE: pending PR: https://github.com/Azure/azure-kusto-python/pull/152
     # recover from serialization if necessary
-    # if isinstance(client, str): 
+    # if isinstance(client, str):
     #     client = KustoClient(client)
     #     _client_cache[client.kusto_cluster] = client
 
@@ -36,7 +36,7 @@ def execute(client, database, query_name, contents):
     except KustoServiceError as error:
         print('Error:', error)
         print('Is semantic error:', error.is_semantic_error())
-        
+
         if error.has_partial_results():
             print('Has partial results.')
             print('Result size:', len(error.get_partial_results()))
@@ -55,7 +55,7 @@ def execute_file(client, database, path, params, transform = False):
     for k,v in params.items():
         if transform:
             if isinstance(v, str):
-                v = '"' + v + '"'        
+                v = '"' + v + '"'
         contents = contents.replace('{' + k + '}', v)
 
     # return result
