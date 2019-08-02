@@ -84,6 +84,9 @@ def to_kusto_datetime(dt):
             return dt
     return 'datetime(' + str(dt) + ')'
 
+def to_kusto_duration(d):
+    return 'totimespan("' + str(d) + '")'
+
 def to_datetime(timestamp):
     s = timestamp[:23] + 'Z' # only allow 5 decimals of precision
     for f in ("%Y-%m-%d %H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%S.%fZ"):
