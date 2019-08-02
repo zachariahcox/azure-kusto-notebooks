@@ -9,6 +9,7 @@ from ast import literal_eval
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
+import pandas as pd
 
 _client_cache = {}
 def get_client(cluster, database):
@@ -93,3 +94,9 @@ def to_datetime(timestamp):
 
 def get_time(timestamp, d):
     return int((cal.timegm(to_datetime(timestamp).timetuple()) + (d * 60)) * 1000)
+
+def pandas_df_to_markdown_table(df):
+    fmt = ['---' for i in range(len(df.columns))]
+    df_fmt = pd.DataFrame([fmt], columns=df.columns)
+    df_formatted = pd.concat([df_fmt, df])
+    return df_formatted.to_csv(sep="|", index=False)
