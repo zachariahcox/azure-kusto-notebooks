@@ -84,7 +84,7 @@ def to_kusto_datetime(dt):
             return dt
     return 'datetime(' + str(dt) + ')'
 
-def to_kusto_duration(d):
+def to_kusto_timespan(d):
     return 'totimespan("' + str(d) + '")'
 
 def to_datetime(timestamp):
