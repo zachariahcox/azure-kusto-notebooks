@@ -10,6 +10,7 @@ from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, 
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 import pandas as pd
+import collections
 
 _client_cache = {}
 def get_client(cluster, database):
@@ -98,8 +99,40 @@ def to_datetime(timestamp):
 def get_time(timestamp, d):
     return int((cal.timegm(to_datetime(timestamp).timetuple()) + (d * 60)) * 1000)
 
-def pandas_df_to_markdown_table(df):
-    fmt = ['---' for i in range(len(df.columns))]
-    df_fmt = pd.DataFrame([fmt], columns=df.columns)
+def pandas_df_to_markdown_table(df, index=False):
+    fmt = ['---' for i in range(len(df.columns) + (1 if index else 0))]
+    df_fmt = pd.DataFrame([fmt],
+                          index=(df.index if index else None),
+                          columns=df.columns)
     df_formatted = pd.concat([df_fmt, df])
-    return df_formatted.to_csv(sep="|", index=False)
+    return df_formatted.to_csv(sep="|", index=index)
+
+def row_as_markdown_table(df):
+    headers = ['Property', 'Value']
+    rc = '|' + '|'.join(headers) + '|\n'
+    rc += '|' + '|'.join(len(headers) * ['---']) + '|\n'
+    r = df.loc[0]
+    for c in df.columns:
+        v = r[c]
+        if isinstance(v, str):
+            pass
+        elif isinstance(v, collections.Sequence):
+            v = '<br/>'.join(v)
+        else:
+            v = str(v)
+        rc += '|' + c + '|' + v + '|\n'
+    return rc
+
+def quote(s):
+    return '"{}"'.format(s)
+
+class Report(object):
+    def __init__(self):
+        self._content = ''
+
+    def write(self, *args):
+        self._content += ''.join([str(a) for a in args]) + '\n'
+
+    @property
+    def content(self):
+        return self._content
