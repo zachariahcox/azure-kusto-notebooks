@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE_NAME = "azure-kusto-notebooks"
-VERSION = '0.2.1'
+VERSION = '0.2.3'
 INSTALL_REQUIRES = [
     'azure-kusto-data[pandas]'
 ]

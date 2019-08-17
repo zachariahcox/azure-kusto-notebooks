@@ -11,6 +11,7 @@ from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 import pandas as pd
 import collections
+import concurrent
 
 _client_cache = {}
 def get_client(cluster, database):
@@ -136,3 +137,79 @@ class Report(object):
     @property
     def content(self):
         return self._content
+
+class Query(object):
+    '''
+    Wraps up principal components needed to run a query
+    '''
+    def __init__(self,
+                 client,
+                 database, 
+                 path, 
+                 params=None):
+        assert isinstance(path, str)
+        assert params is None or isinstance(params, dict)
+        self._client = client
+        self._database = database
+        self._path = path
+        self._params = params
+        self._result = None
+        self._df = None
+
+    @property
+    def client(self):
+        return self._client
+    
+    @property
+    def database(self):
+        return self._database
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def result(self):
+        return self._result
+    
+    @result.setter
+    def result(self, v):
+        self._result = v
+    
+    @property
+    def dataframe(self):
+        if self._df is None and self._result is not None:
+            self._df = to_dataframe(self._result.primary_results[0])
+            self._result = None
+        return self._df
+        
+
+def run(q, create_dataframes=True):
+    '''Runs a single or sequence of queries in parallel using threads'''
+    assert isinstance(q, Query) or isinstance(q, collections.Sequence)
+    if isinstance(q, Query):
+        return execute_file(q.client, q.database, q.path, q.params)
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        query_futures = {
+            executor.submit(
+                execute_file, 
+                query.client, 
+                query.database,
+                query.path,
+                query.params) : query 
+            for query in q }
+
+        df_futures = []
+        for f in concurrent.futures.as_completed(query_futures):
+            query = query_futures[f]
+            query.result = f.result()
+            if create_dataframes:
+                df_futures.append(executor.submit(query.dataframe))    
+
+        for f in concurrent.futures.as_completed(df_futures):
+            pass
