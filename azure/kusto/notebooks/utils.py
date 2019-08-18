@@ -108,6 +108,10 @@ def pandas_df_to_markdown_table(df, index=False):
     df_formatted = pd.concat([df_fmt, df])
     return df_formatted.to_csv(sep="|", index=index)
 
+def pandas_row_to_dictionary(df):
+    r = df.loc[0]
+    return {c : r[c] for c in df.columns}
+
 def row_as_markdown_table(df):
     headers = ['Property', 'Value']
     rc = '|' + '|'.join(headers) + '|\n'
@@ -123,6 +127,23 @@ def row_as_markdown_table(df):
             v = str(v)
         rc += '|' + c + '|' + v + '|\n'
     return rc
+
+def to_md_table(d):
+    """Converts dictionary to markdown table"""
+    r = Report()
+    headers = ['Property', 'Value']
+    r.write('|', '|'.join(headers), '|')
+    r.write('|', '|'.join(len(headers) * ['---']), '|')
+    for k in sorted(d.keys()):
+        v = d[k]
+        if isinstance(v, str):
+            pass
+        elif isinstance(v, collections.Sequence):
+            v = '<br/>'.join(v)
+        else:
+            v = str(v)
+        r.write('|', k, '|', v, '|')
+    return r.content
 
 def quote(s):
     return '"{}"'.format(s)
