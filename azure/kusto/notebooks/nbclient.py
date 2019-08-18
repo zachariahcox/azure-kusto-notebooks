@@ -4,12 +4,14 @@ from azure.kusto.data._version import VERSION
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
 
-from datetime import timedelta
+from datetime import timedelta, datetime
+import dateutil
+
 import requests
 from requests.adapters import HTTPAdapter
-import dateutil
-import json
+
 from copy import copy
+import json
 import uuid
 
 
@@ -20,28 +22,27 @@ class NotebookKustoClient(object):
     _max_pool_size = 100
 
     def __init__(self, cluster, adal_context):
-        kusto_cluster = cluster
+        assert isinstance(cluster, str)
+        assert isinstance(adal_context, AuthenticationContext)
 
-        # Create a session object for connection pooling
-        self._session = requests.Session()
+        self._kusto_cluster = cluster
+        self._adal_context = adal_context
+        self._session = requests.Session() # Create a session object for connection pooling
         self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
         self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-        self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+        self._query_endpoint = "{0}/v2/rest/query".format(cluster)
         self._request_headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip,deflate",
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
         }
-        
-        # auth
-        assert isinstance(adal_context, AuthenticationContext)
-        self._adal_context = adal_context or AuthenticationContext("https://login.microsoftonline.com/common")
-        self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58" # lifted from azure.kusto.data
 
-    @property
+    @staticmethod
     def client_id():
-        return self._client_id
+        """lifted from azure.kusto.data.request.KustoClient"""
+        return "db662dc1-0cfe-4e1c-a843-19a68e65be58"
     
+
     def execute_query(self, database, query, properties=None):
         """Executes a query.
         :param str database: Database against query will be executed.
@@ -100,7 +101,9 @@ class NotebookKustoClient(object):
         try:
             return self._acquire_authorization_header()
         except AdalError as error:
-            kwargs = {"client_id": self._client_id}
+            kwargs = {
+                "client_id": NotebookKustoClient.client_id()
+                }
             kwargs["resource"] = self._kusto_cluster
             kwargs["authority"] = self._adal_context.authority.url
             raise KustoAuthenticationError(self._authentication_method.value, error, **kwargs)
@@ -108,30 +111,30 @@ class NotebookKustoClient(object):
 
     def _acquire_authorization_header(self):
         # load token from cache
-        token = self._adal_context.acquire_token(self._kusto_cluster, None, self._client_id)
+        client_id = NotebookKustoClient.client_id()
+        token = self._adal_context.acquire_token(
+            resource=self._kusto_cluster, 
+            user_id=None, 
+            client_id=client_id)
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
             if expiration_date > datetime.now() + timedelta(minutes=1):
-                return _get_header_from_dict(token)
+                return NotebookKustoClient._get_header_from_dict(token)
             if TokenResponseFields.REFRESH_TOKEN in token:
                 token = self._adal_context.acquire_token_with_refresh_token(
-                    token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster
+                    refresh_token=token[TokenResponseFields.REFRESH_TOKEN], 
+                    client_id=client_id, 
+                    resource=self._kusto_cluster
                 )
                 if token is not None:
-                    return _get_header_from_dict(token)
+                    return NotebookKustoClient._get_header_from_dict(token)
 
-        # create a new token from scratch
-        code = self._adal_context.acquire_user_code(self._kusto_cluster, self._client_id)
-        print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
-        webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
-        token = self._adal_context.acquire_token_with_device_code(self._kusto_cluster, code, self._client_id)
-
-        return _get_header_from_dict(token)
-
-
+        # should never get here
+        return None
+        
+    @staticmethod
     def _get_header_from_dict(token):
-        return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
-
-
-    def _get_header(token_type, access_token):
-        return "{0} {1}".format(token_type, access_token)
+        return "{0} {1}".format(
+            token[TokenResponseFields.TOKEN_TYPE], 
+            token[TokenResponseFields.ACCESS_TOKEN])
+        
