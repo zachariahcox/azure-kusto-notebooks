@@ -294,7 +294,7 @@ def promp_for_aad_device_login(url, text, code):
     assert isinstance(url, str)
     assert isinstance(text, str)
     assert isinstance(code, str)
-
+    buttonElementId = "azure-kusto-nbs-button"
     if not isnotebook():
         # print helpful message: 
         print('Please go to', url, 'and paste', code, 'in the box.')
@@ -321,12 +321,13 @@ function copyToClipboard(text) {
         }
     }
 }
+document.getElementById('{buttonId}').scrollIntoView();
 </script>
-<button onclick="copyToClipboard('{code}'); window.open('{url}', '_blank', 'location=yes,height=500,width=520,scrollbars=no,status=no');">{text}</button>
+<button id='{buttonId}' onclick="copyToClipboard('{code}'); window.open('{url}', '_blank', 'location=yes,height=500,width=520,scrollbars=no,status=no');">{text}</button>
 '''
     
     # replace tokens
-    for k, v in {'url': url, 'text': text, 'code': code}.items():
+    for k, v in {'url': url, 'text': text, 'code': code, 'buttonId': buttonElementId}.items():
         html = html.replace('{' + k + '}', v)
     
     # render
