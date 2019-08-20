@@ -10,6 +10,7 @@ from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, 
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 import pandas as pd
+pd.set_option('max_colwidth', 200)
 import collections
 import concurrent
 from IPython.core.display import display, HTML
@@ -94,7 +95,7 @@ def execute_file(client, database, path, params, transform = False):
     # return result
     return execute(client, database, contents)
 
-    
+
 def to_dataframe(result):
     return dataframe_from_result_table(result)
 
