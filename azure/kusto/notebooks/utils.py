@@ -47,7 +47,7 @@ def get_client(cluster):
         url = user_code_info[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL]
         promp_for_aad_device_login(
             url=url,
-            text=' '.join(['Click here and paste', code, 'to authenticate', cluster]), 
+            text='Authenticate', 
             code=code)
 
         # wait for user to input code
@@ -149,6 +149,8 @@ def pandas_df_to_markdown_table(df, index=False):
 
 
 def pandas_row_to_dictionary(df):
+    if df.empty:
+        return {}
     r = df.loc[0]
     return {c : r[c] for c in df.columns}
 
@@ -298,7 +300,7 @@ def promp_for_aad_device_login(url, text, code):
     buttonElementId = "azure-kusto-nbs-button"
     if not isnotebook():
         # print helpful message: 
-        print('Please go to', url, 'and paste', code, 'in the box.')
+        print('To authenticate, please go to', url, 'and paste', code, 'in the box.')
         return
 
     html = '''
@@ -322,9 +324,31 @@ function copyToClipboard(text) {
         }
     }
 }
-document.getElementById('{buttonId}').scrollIntoView();
+
+// onclick
+var b = document.getElementById('{buttonId}');
+b.onclick = function(){
+    copyToClipboard('{code}'); 
+    window.open('{url}', '_blank', 'location=yes,height=400,width=520,scrollbars=no,status=no');
+};
+b.scrollIntoView();
 </script>
-<button id='{buttonId}' onclick="copyToClipboard('{code}'); window.open('{url}', '_blank', 'location=yes,height=500,width=520,scrollbars=no,status=no');">{text}</button>
+<div>
+Clicking this button will open an AAD device login window. <br/>
+Paste this code to authenticate.<br/>
+<table>
+<tr>
+    <th>Code</th>
+    <th>URL</th>
+    <th>Easy Button</th>
+</tr>
+<tr>
+    <td>{code}</td>
+    <td>{url}</td>
+    <td><button id='{buttonId}'>{text}</button></td>
+</tr>
+</table>
+</div>
 '''
     
     # replace tokens
