@@ -297,7 +297,6 @@ def promp_for_aad_device_login(url, text, code):
     assert isinstance(url, str)
     assert isinstance(text, str)
     assert isinstance(code, str)
-    buttonElementId = "azure-kusto-nbs-button"
     if not isnotebook():
         # print helpful message: 
         print('To authenticate, please go to', url, 'and paste', code, 'in the box.')
@@ -352,7 +351,7 @@ Paste this code to authenticate.<br/>
 '''
     
     # replace tokens
-    for k, v in {'url': url, 'text': text, 'code': code, 'buttonId': buttonElementId}.items():
+    for k, v in {'url': url, 'text': text, 'code': code, 'buttonId': code}.items():
         html = html.replace('{' + k + '}', v)
     
     # render
