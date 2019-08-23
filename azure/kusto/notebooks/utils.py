@@ -100,8 +100,13 @@ def to_dataframe(result):
     return dataframe_from_result_table(result)
 
 
-def to_dataframe_from_future(promise):
-    return to_dataframe(promise.result().primary_results[0])
+def to_dataframe_from_future(f):
+    try:
+        resp = f.result()
+        if resp:
+            return to_dataframe(resp.primary_results[0])
+    except Exception as e:
+        print(e)
 
 
 def print_result_stats(result):
@@ -145,7 +150,7 @@ def pandas_df_to_markdown_table(df, index=False):
                           index=(df.index if index else None),
                           columns=df.columns)
     df_formatted = pd.concat([df_fmt, df])
-    return df_formatted.to_csv(sep="|", index=index)
+    return '\n' + df_formatted.to_csv(sep="|", index=index) + '\n'
 
 
 def pandas_row_to_dictionary(df):
@@ -356,3 +361,13 @@ Paste this code to authenticate.<br/>
     
     # render
     display(HTML(html))
+
+def details_md(summary, content):
+    """strips empty lines from content. content should not contain markdown"""
+    lines = ['\n<details>']
+    lines.append('<summary>' + ''.join(summary.split('\n')) + '</summary>')
+    lines.append('<pre>')
+    lines += [line for line in content.split('\n') if line.strip()]
+    lines.append('</pre>')
+    lines.append('</details>\n')
+    return '\n'.join(lines)

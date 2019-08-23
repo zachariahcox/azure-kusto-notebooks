@@ -18,15 +18,17 @@ def clean():
 
 
 def build():
-    rc = subprocess.call('python setup.py sdist', shell=True)
-    assert rc == 0
+    cmd = 'python setup.py sdist'
+    rc = subprocess.call(cmd, shell=True)
+    assert rc == 0, cmd
     assert os.path.isdir(os.path.join(root, 'dist'))
 
 
 def upload():
     print('pypi credentials:')
-    rc = subprocess.call('twine upload dist/*')
-    assert rc == 0
+    cmd = 'twine upload dist/*'
+    rc = subprocess.call(cmd, shell=True)
+    assert rc == 0, cmd
 
 
 if __name__ == "__main__":
