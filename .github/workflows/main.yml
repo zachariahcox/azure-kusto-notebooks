@@ -13,4 +13,4 @@ jobs:
     - uses: yaananth/twine-upload@v1
       env:
         RUNNER: ${{ toJson(runner) }}
-        SECRETS: ${{ toJson(secrets) }}
+        SECRETS: ${{ toJson(secrets) }}  # references "username" and "password" from repo secrets
